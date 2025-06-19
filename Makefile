@@ -15,7 +15,10 @@ OBJ_FILES = $(patsubst $(SRC_FOLDER)%.cpp, $(OBJ_FOLDER)%.o, $(SRC_FILES))
 TARGET = $(BIN_FOLDER)tp2.out
 
 # Rules
-all: $(TARGET)
+all: $(BIN_FOLDER) $(OBJ_FOLDER) $(TARGET)
+
+$(BIN_FOLDER) $(OBJ_FOLDER):
+	mkdir -p $@
 
 $(TARGET): $(OBJ_FILES)
 	$(CC) $(CFLAGS) $^ -o $@

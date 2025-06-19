@@ -7,16 +7,16 @@
 class Package;
 
 typedef struct n
-{
+{ // Represents a neighbor warehouse (section)
     int id;
-    Stack section;
+    Stack section; // Stack of packages destined for this neighbor
 } Neighbor;
 
 class Warehouse
 {
     private:
         int id, qtd_neighbors;
-        Neighbor* neighbors; // Array of the current warehouse neighbors
+        Neighbor* neighbors; // Array of neighbor warehouses (sections)
 
     public:
         Warehouse();
@@ -31,7 +31,8 @@ class Warehouse
         void PrintNeighbors ();  
 
         void PushPackage(Package* p);
-        int* PopPackages(int section, int _clock_time, int _removal_cost, Package*& packages, int qtd_packages, int& qtd_ids, Transport* t);
+        int* PopPackages(int section, int _clock_time, int _removal_cost, 
+            Package*& packages, int qtd_packages, int& qtd_ids, Transport* t);
     
     friend class Package;
 };

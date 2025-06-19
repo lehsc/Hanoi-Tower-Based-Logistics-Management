@@ -1,3 +1,11 @@
+/*
+---------------------------------------------------------------------------------------
+  File        : Warehouse.cpp
+  Description : Implementation of the Warehouse class, which manages package storage, 
+                neighbor sections, and package removal from sections.
+---------------------------------------------------------------------------------------
+*/
+
 #include <iostream>
 
 #include "../include/Warehouse.h"
@@ -5,18 +13,24 @@
 #include "../include/Scheduler.h"
 #include "../include/utils.h"
 
+// Default constructor
 Warehouse::Warehouse() : id(-1), qtd_neighbors(0) { neighbors = nullptr; }
 
+// Parameterized constructor
 Warehouse::Warehouse(int _id, int _qtd_neighbors) : id(_id), qtd_neighbors(_qtd_neighbors) 
-{ neighbors = new Neighbor[qtd_neighbors]; }
+{ 
+    neighbors = new Neighbor[qtd_neighbors]; 
+}
 
+// Destructor
 Warehouse::~Warehouse() { delete[] neighbors; }
 
+// Get methods
 int Warehouse::GetId() { return id; }
 int Warehouse::GetQtdNeighbors() { return qtd_neighbors; }
 
 Neighbor* Warehouse::FindNeighbor(int neighbor_id) 
-//
+// Returns a pointer to the neighbor with the given ID
 {
     for (int i = 0; i < qtd_neighbors; i++)
     {
@@ -28,20 +42,21 @@ Neighbor* Warehouse::FindNeighbor(int neighbor_id)
 }
 
 void Warehouse::AddNeighbors(int* _neighbors_ids)
+// Sets the neighbors IDs
 {
     for (int i = 0; i < qtd_neighbors; i++) 
         neighbors[i].id = _neighbors_ids[i];
 }
 
 void Warehouse::PrintNeighbors()
-//
+// Prints the neighbor IDs
 {
     for (int i = 0; i < qtd_neighbors; i++) std::cout << neighbors[i].id << " ";
     printf("\n");
 }
 
 void Warehouse::PushPackage(Package* p) 
-// 
+// Stores a package in the section corresponding to its next step in route
 {
     int section = p->GetNextStep();
     for (int i = 0; i < qtd_neighbors; i++)
@@ -55,9 +70,9 @@ void Warehouse::PushPackage(Package* p)
 
 int* Warehouse::PopPackages(int section, int _clock_time, int _removal_cost, 
         Package*& packages, int qtd_packages, int& qtd_ids, Transport* t)
-//
+// Removes packages from the given section, handling transport capacity and state updates
 {
-    Stack temp; // pilha auxiliar
+    Stack temp; // Auxiliary stack
     Neighbor* neighbor = FindNeighbor(section);
     Package* p;
     int package_id, i = 0, qtd_removed_packages = 0;
@@ -67,25 +82,27 @@ int* Warehouse::PopPackages(int section, int _clock_time, int _removal_cost,
         qtd_ids = neighbor->section.GetQtdCells();
         int* packages_ids = new int[qtd_ids];
 
-        while (neighbor->section.GetQtdCells() > 0) // desempilhar todos os pacotes da seção
+        // Remove all packages from the section stack
+        while (neighbor->section.GetQtdCells() > 0)
         {
             package_id = neighbor->section.Pop();
             _clock_time += _removal_cost;
             printf("%07d pacote %03d removido de %03d na secao %03d\n", _clock_time, package_id, id, section);
 
-            temp.Push(package_id); // colocar pacote em uma pilha auxiliar
-            packages_ids[i] = package_id;
+            temp.Push(package_id); // Store the removed package in the auxiliary stack
+            packages_ids[i] = package_id; // Array to store the IDs of all packages removed from the section
             i++;
         }
         
-        while (temp.GetQtdCells() > 0) // desempilhar a pilha auxiliar
+        // Process packages considering transport capacity
+        while (temp.GetQtdCells() > 0)
         {           
             package_id = temp.Pop(); 
             p = FindPackage(package_id, packages, qtd_packages);
             
             if (p)
             {
-                if (qtd_removed_packages <= t->capacity)
+                if (qtd_removed_packages < t->capacity)
                 {
                     printf("%07d pacote %03d em transito de %03d para %03d\n", _clock_time, package_id, id, section);
                     p->SetCurrentState(SECTION_REMOVED); // update package status
@@ -102,6 +119,7 @@ int* Warehouse::PopPackages(int section, int _clock_time, int _removal_cost,
             }      
         }
 
+        // Update each package's latest processing time
         for (int i = 0; i < qtd_ids; i++)
             packages[packages_ids[i]].SetPTime(_clock_time);
         

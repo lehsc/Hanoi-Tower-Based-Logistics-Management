@@ -1,7 +1,11 @@
-//---------------------------------------------------------------------------------------
-// Arquivo    : utils.cpp
-// Conteúdo   : Implementação de funções auxiliares usadas pelo programa principal
-//---------------------------------------------------------------------------------------
+/*
+---------------------------------------------------------------------------------------
+  File        : utils.cpp
+  Description : Implementation of auxiliary functions used by the main program 
+                for reading input files, processing warehouses and packages, 
+                and utility tasks.
+---------------------------------------------------------------------------------------
+*/
 
 #include <iostream>
 #include <string>
@@ -12,8 +16,8 @@
 #include "../include/Package.h"
 #include "../include/Scheduler.h"
 
-Package* FindPackage(int id, Package* packages, int qtd_packages)
 //
+Package* FindPackage(int id, Package* packages, int qtd_packages)
 {
   for (int i = 0; i < qtd_packages; i++)
     if (id == packages[i].GetId()) return &packages[i];
@@ -21,23 +25,23 @@ Package* FindPackage(int id, Package* packages, int qtd_packages)
 }
 
 void PrintPackages(Package* packages, int qtd_packages)
-//
+// Prints all packages' information (id, arrival time, origin, destination)
 {
   for (int i = 0; i < qtd_packages; i++)
     printf("%d %d %d %d\n", packages[i].GetId(), packages[i].GetArrival(), packages[i].GetOriginId(), packages[i].GetDestinationId());
 }
 
 bool ExistFile(const std::string f)
-// Verifies if the file f is open
+// Verifies if the input file exists and can be opened
 {
   std::ifstream file(f);
   return file.is_open();
 }
 
 void ProcessWarehouse(std::string file_line, Graph* g, int index)
-// 
+// Processes a warehouse line from the input file and adds the warehouse to the graph 'g'
 {
-  int k = 0, j = 0; // k - counts the current warehouse neighbors, j - counts the warehouse indices
+  int k = 0, j = 0; // k - number of neighbors, j - warehouse indices
   int* neighbors_indices = new int[g->GetMaxWarehouses() - 1];
 
   for (int i = 0; (unsigned)i <= file_line.size(); i++)
@@ -50,12 +54,11 @@ void ProcessWarehouse(std::string file_line, Graph* g, int index)
   }
 
   g->AddWarehouse(index, k, neighbors_indices);
-
   delete[] neighbors_indices;
 }
 
 void ProcessPackage(std::string file_line, Package* packages, int i, Graph* g) 
-//
+// Processes a package line from the input file and creates the corresponding Package object
 {
   int k = 0;
   int* data = new int[4];
@@ -63,7 +66,7 @@ void ProcessPackage(std::string file_line, Package* packages, int i, Graph* g)
 
   for (int j = 0; (unsigned)j <= file_line.size(); j++){
     if (file_line[j] != ' ')
-      entry += file_line[j]; // concatenates characters until it finds an empty space
+      entry += file_line[j]; // Concatenate characters until a space is found
     else {
       if (entry != "pac" && entry != "org" && entry != "dst") data[k++] = stoi(entry);
       entry = "";
@@ -74,15 +77,17 @@ void ProcessPackage(std::string file_line, Package* packages, int i, Graph* g)
 
   packages[i] = Package(i, data[0], data[2], data[3]);
   packages[i].CalcRoute(g);
+
+  delete[] data;
 }
 
 Package* ReadFile(const std::string f, Graph*& g, int* qtd_packages)
-// 
+// Reads the input file and initializes the graph and packages
 {
   std::ifstream file(f);
   Package* packages = nullptr;
 
-  if (!file.is_open()) { // verifies if the file was open correctly
+  if (!file.is_open()) {
     std::cerr << "Ocorreu um erro ao tentar abrir o arquivo '" + f + "'." << std::endl;
     return packages;
   }
@@ -92,8 +97,8 @@ Package* ReadFile(const std::string f, Graph*& g, int* qtd_packages)
   Transport t;
 
   while(getline(file, line))
-  { // read file lines
-
+  // Read each line from the input file
+  {
     if (i > 4)
     {
       if (i == 5) {
@@ -110,7 +115,9 @@ Package* ReadFile(const std::string f, Graph*& g, int* qtd_packages)
       } 
     }
     
-    else { // firt three lines contain transport info and the removal cost
+    else 
+    // First four lines contain transport info and removal cost
+    {
       switch (i)
       { 
         case 1:

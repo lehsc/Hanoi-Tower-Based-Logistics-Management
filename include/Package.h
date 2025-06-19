@@ -17,7 +17,8 @@ enum States
 class Package
 {
     private:
-        int id, arrival_time, origin_id, destination_id, current_location_id, p_time;
+        int id, arrival_time, origin_id, destination_id, current_location_id;
+        int p_time; // stores the last time when the package was processed (transport)
         States current_state; // one of the enum (0-4)
         LinkedList* route;
 

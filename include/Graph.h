@@ -6,7 +6,9 @@ class Package;
 
 typedef struct transport_t
 {
-    int capacity, latency, interval;
+    int capacity;  // Maximum number of packages the transport can carry at once
+    int latency;   // Time required for the transport to travel between two warehouses
+    int interval;  // Time interval between consecutive transport departures
 } Transport;
 
 class Graph
