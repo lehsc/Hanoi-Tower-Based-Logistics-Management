@@ -1,0 +1,137 @@
+//---------------------------------------------------------------------------------------
+// Arquivo    : utils.cpp
+// Conteúdo   : Implementação de funções auxiliares usadas pelo programa principal
+//---------------------------------------------------------------------------------------
+
+#include <iostream>
+#include <string>
+#include <fstream>
+
+#include "../include/utils.h"
+#include "../include/Graph.h"
+#include "../include/Package.h"
+#include "../include/Scheduler.h"
+
+Package* FindPackage(int id, Package* packages, int qtd_packages)
+//
+{
+  for (int i = 0; i < qtd_packages; i++)
+    if (id == packages[i].GetId()) return &packages[i];
+  return nullptr;
+}
+
+void PrintPackages(Package* packages, int qtd_packages)
+//
+{
+  for (int i = 0; i < qtd_packages; i++)
+    printf("%d %d %d %d\n", packages[i].GetId(), packages[i].GetArrival(), packages[i].GetOriginId(), packages[i].GetDestinationId());
+}
+
+bool ExistFile(const std::string f)
+// Verifies if the file f is open
+{
+  std::ifstream file(f);
+  return file.is_open();
+}
+
+void ProcessWarehouse(std::string file_line, Graph* g, int index)
+// 
+{
+  int k = 0, j = 0; // k - counts the current warehouse neighbors, j - counts the warehouse indices
+  int* neighbors_indices = new int[g->GetMaxWarehouses() - 1];
+
+  for (int i = 0; (unsigned)i <= file_line.size(); i++)
+  {
+    if (file_line[i] != ' ')
+    {
+      if (file_line[i] == '1') neighbors_indices[k++] = j;
+      j++;
+    }
+  }
+
+  g->AddWarehouse(index, k, neighbors_indices);
+
+  delete[] neighbors_indices;
+}
+
+void ProcessPackage(std::string file_line, Package* packages, int i, Graph* g) 
+//
+{
+  int k = 0;
+  int* data = new int[4];
+  std::string entry = "";
+
+  for (int j = 0; (unsigned)j <= file_line.size(); j++){
+    if (file_line[j] != ' ')
+      entry += file_line[j]; // concatenates characters until it finds an empty space
+    else {
+      if (entry != "pac" && entry != "org" && entry != "dst") data[k++] = stoi(entry);
+      entry = "";
+    }
+  }
+
+  data[k] = stoi(entry);
+
+  packages[i] = Package(i, data[0], data[2], data[3]);
+  packages[i].CalcRoute(g);
+}
+
+Package* ReadFile(const std::string f, Graph*& g, int* qtd_packages)
+// 
+{
+  std::ifstream file(f);
+  Package* packages = nullptr;
+
+  if (!file.is_open()) { // verifies if the file was open correctly
+    std::cerr << "Ocorreu um erro ao tentar abrir o arquivo '" + f + "'." << std::endl;
+    return packages;
+  }
+
+  std::string line{};
+  int i = 1, max_wh, removal_cost;
+  Transport t;
+
+  while(getline(file, line))
+  { // read file lines
+
+    if (i > 4)
+    {
+      if (i == 5) {
+        g = new Graph(stoi(line), removal_cost, t);
+        max_wh = g->GetMaxWarehouses();
+      } else {
+        if (i-6 < max_wh)
+          ProcessWarehouse(line, g, i-6);
+        else if (i == max_wh + 6) {
+          *qtd_packages = stoi(line);
+          packages = new Package[*qtd_packages];
+        }
+        else ProcessPackage(line, packages, i-(7+max_wh), g);
+      } 
+    }
+    
+    else { // firt three lines contain transport info and the removal cost
+      switch (i)
+      { 
+        case 1:
+          t.capacity = stoi(line);
+          break;
+        case 2:
+          t.latency = stoi(line);
+          break;
+        case 3:
+          t.interval = stoi(line);
+          break;
+        case 4:
+          removal_cost = stoi(line);
+          break;
+        default:
+          break;
+      }
+    }
+
+    i++;
+  }
+
+  return packages;  
+}
