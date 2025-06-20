@@ -189,9 +189,13 @@ void Scheduler::RunSimulation(Package*& packages, Graph*& system)
 */
 {
     std::string current_event_key, new_event_key;
-    int id_arr_size, prev_transport = -1, next_transport = -1;
-    int* packages_ids;
     Package* p;
+    int prev_transport = -1; // time of the last scheduled transport
+    int next_transport = -1; // time for the next scheduled transport
+    
+    int* packages_ids;  // array of package IDs removed from a section
+    int id_arr_size;    // number of IDs in packages_ids
+
     char buffer[500];
 
     while (qtd_events > 0)
@@ -199,108 +203,69 @@ void Scheduler::RunSimulation(Package*& packages, Graph*& system)
         current_event_key = RemoveNextEvent();
         clock_time = stoi(current_event_key.substr(0,6));
 
-        if (stoi(current_event_key.substr(12,1)) == 1) // Package event
+        if (stoi(current_event_key.substr(12,1)) == 1) // Package event: package arrival
         {
-            p = SearchPackage(current_event_key, packages);
+            p = &packages[stoi(current_event_key.substr(6,6))];
+            p->SetCurrentState(WAREHOUSE_ARRIVAL);
 
-            if (p)
+            // Remove the first warehouse from the route
+            // If the route becomes empty after removal, the package has arrived at the destination
+            // Otherwise, push the package onto the stack of the corresponding section
+            if (!p->AdvanceInRoute()) 
             {
-                switch (p->GetCurrentState())
-                {
-                    case NOT_POSTED: // package has just arrived at the first warehouse
-                        p->SetCurrentState(WAREHOUSE_ARRIVAL);
+                // Push the package onto the section stack of the next warehouse
+                system->StorePackage(p, p->GetCurrentLocation());
+                p->SetCurrentState(SECTION_STORED);
+                if (next_transport == -1) next_transport = clock_time + system->GetTransport().interval;
 
-                        // remover primeiro armazém da rota
-                        // se a rota após remoção ficar vazia, pacote chegou ao dst
-                        // caso contrário, adicionar pacote na pilha da seção correspondente
-                        if (!p->AdvanceInRoute())
-                        {
-                            // empilhar pacote na seção do próximo armazém
-                            system->StorePackage(p, p->GetOriginId());
-                            p->SetCurrentState(SECTION_STORED);
-                        } else {
-                            p->SetCurrentState(DELIVERED);
-                            sprintf(buffer, "%07d pacote %03d entregue em %03d", clock_time, p->GetId(), 
-                                p->GetDestinationId());
-                            break;
-                        }
-                        
-                        if (next_transport == -1) next_transport = clock_time + system->GetTransport().interval;
+                // Adding transport event in min heap
+                new_event_key = GenerateKey(next_transport, 2, -1, p->GetCurrentLocation(), p->GetNextStep());
+                NewEvent(new_event_key);
 
-                        // Adding transport event in min heap
-                        new_event_key = GenerateKey(next_transport, 2, -1, p->GetCurrentLocation(), p->GetNextStep());
-                        NewEvent(new_event_key);
-
-                        sprintf(buffer, "%07d pacote %03d armazenado em %03d na secao %03d", clock_time, p->GetId(), 
-                            p->GetCurrentLocation(), p->GetNextStep());
-                        
-                        prev_transport = next_transport;
-                        
-                        break;
-
-                    case SECTION_REMOVED: // package was being transported and just arrived
-                        p->SetCurrentState(WAREHOUSE_ARRIVAL);
-                        prev_transport = next_transport;
-
-                        // remover primeiro armazém da rota
-                        // se a rota após remoção ficar vazia, pacote chegou ao dst
-                        // caso contrário, adicionar pacote na pilha da seção correspondente
-                        if (!p->AdvanceInRoute())
-                        {
-                            // empilhar pacote na seção do próximo armazém
-                            system->StorePackage(p, p->GetCurrentLocation());
-                            p->SetCurrentState(SECTION_STORED);
-                        } else {
-                            p->SetCurrentState(DELIVERED);
-                            sprintf(buffer, "%07d pacote %03d entregue em %03d", clock_time, p->GetId(), 
-                                p->GetDestinationId());
-                            break;
-                        }
-
-                        // Adding transport event in min heap
-                        new_event_key = GenerateKey(next_transport, 2, -1, p->GetCurrentLocation(), p->GetNextStep());
-                        NewEvent(new_event_key);
-
-                        sprintf(buffer, "%07d pacote %03d armazenado em %03d na secao %03d", clock_time, p->GetId(), 
-                            p->GetCurrentLocation(), p->GetNextStep());
-                        
-                        break;
-
-                    default:
-                        break;
-                }
-
-                printf("%s\n", buffer);
+                sprintf(buffer, "%07d pacote %03d armazenado em %03d na secao %03d", clock_time, p->GetId(), 
+                    p->GetCurrentLocation(), p->GetNextStep());
             } else {
-                std::cerr << "Erro: Pacote não encontrado!" << std::endl;
-                exit(EXIT_FAILURE);
-            }     
+                p->SetCurrentState(DELIVERED);
+                sprintf(buffer, "%07d pacote %03d entregue em %03d", clock_time, p->GetId(), 
+                    p->GetDestinationId());
+            }
+            
+            // Ensure that "prev_transport" is updated only when "next_transport" advances
+            if (prev_transport != next_transport) prev_transport = next_transport;
+
+            printf("%s\n", buffer);    
         }
 
         else // Transport event
         {
-            packages_ids = system->RemovePackages(stoi(current_event_key.substr(6,3)), stoi(current_event_key.substr(9,3)), 
-                clock_time, packages, qtd_packages, id_arr_size);
+            // Remove up to 'c' packages from the section stack at the source warehouse (origin → destination)
+            // The function returns an array with the IDs of the removed packages and updates id_arr_size
+            packages_ids = system->RemovePackages(
+                stoi(current_event_key.substr(6, 3)),  // Origin warehouse ID
+                stoi(current_event_key.substr(9, 3)),  // Destination warehouse ID
+                clock_time, 
+                packages, 
+                qtd_packages, 
+                id_arr_size
+            );
             
-            if (next_transport <= prev_transport) 
+            if (next_transport <= prev_transport) // Schedule the next transport event if needed
                 next_transport += system->GetTransport().interval;
 
-            for (int i = 0; i < id_arr_size; i++)
+            for (int i = 0; i < id_arr_size; i++) // For each removed package, decide what event to schedule next
             {
-                p = FindPackage(packages_ids[i], packages, qtd_packages);
-                if (p)
+                p = &packages[packages_ids[i]];
+                if (p->GetCurrentState() == SECTION_REMOVED) // package is in transit
                 {
-                    if (p->GetCurrentState() == SECTION_REMOVED)
-                    {
-                        new_event_key = GenerateKey(p->GetPTime() + system->GetTransport().latency, 1, packages_ids[i]);
-                        NewEvent(new_event_key);
-                    } else if (p->GetCurrentState() == SECTION_STORED) // rearmazenado
-                    {
-                        new_event_key = GenerateKey(next_transport, 2, -1, p->GetCurrentLocation(), p->GetNextStep());
-                        NewEvent(new_event_key);
-                    }
-                } else
-                    continue;
+                    // Schedule its arrival at the next warehouse
+                    new_event_key = GenerateKey(p->GetPTime() + system->GetTransport().latency, 1, packages_ids[i]);
+                    NewEvent(new_event_key);
+                } else if (p->GetCurrentState() == SECTION_STORED) // package was re-stored
+                {
+                    // Schedule a new transport event (same origin and destination)
+                    new_event_key = GenerateKey(next_transport, 2, -1, p->GetCurrentLocation(), p->GetNextStep());
+                    NewEvent(new_event_key);
+                }
             }
         }
     }

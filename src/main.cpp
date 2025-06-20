@@ -19,8 +19,8 @@ int main (int argc, char ** argv)
 {
   // Check if the required input file was provided as a command-line argument
   if (argc < 2) {
-    std::cerr << "Erro: Nenhum arquivo foi fornecido como parâmetro." << std::endl;
-    std::cerr << "Uso: " << argv[0] << " <nome_do_arquivo>" << std::endl;
+    std::cerr << "Error: No input file was provided as a parameter." << std::endl;
+    std::cerr << "Usage: " << argv[0] << "<file_path>" << std::endl;
     return 1;
   }
 
@@ -34,7 +34,7 @@ int main (int argc, char ** argv)
   if (ExistFile(file))
     packages = ReadFile(file, g, &qtd_packages);
   else {
-    std::cerr << "Erro: O arquivo '" << file << "' não existe." << std::endl;
+    std::cerr << "Error: The file '" << file << "' does not exist." << std::endl;
     return 1;
   }  
 
