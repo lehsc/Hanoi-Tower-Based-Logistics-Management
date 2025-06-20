@@ -2,14 +2,20 @@
 
 #include "../include/Stack.h"
 
+// Default constructor
 Stack::Stack() : qtd_cells(0) { top = nullptr; }
 
+// Destructor
 Stack::~Stack() { Clear(); }
 
-int Stack::GetQtdCells() { return qtd_cells; }
+int Stack::GetQtdCells()
+// Returns number of elements in the stack
+{ 
+    return qtd_cells; 
+}
 
 void Stack::Push(int _key)
-//
+// Pushes a new element onto the stack
 {
     Cell* new_cel = new Cell;
     new_cel->key = _key;
@@ -19,7 +25,7 @@ void Stack::Push(int _key)
 }
 
 int Stack::Pop()
-//
+// Removes and returns the top element
 {   
     if (!top) 
     {
@@ -31,10 +37,12 @@ int Stack::Pop()
     Cell* aux = top;
     top = top->prox;
     delete aux;
-
     qtd_cells--;
-    
     return removed_key;
 }
 
-void Stack::Clear() { while (top) Pop(); }
+void Stack::Clear()
+// Removes all elements from the stack
+{ 
+    while (top) Pop(); 
+}

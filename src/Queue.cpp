@@ -2,31 +2,31 @@
 
 #include "../include/Queue.h"
 
+// Default constructor
 Queue::Queue()
 {
     front = nullptr;
     back = nullptr;
 }
 
+// Destructor
 Queue::~Queue() { Clear(); }
 
 void Queue::Enqueue(int _key)
-//
+// Adds a new element at the end of the queue
 {
     Cell* new_cel = new Cell;
     new_cel->key = _key;
     new_cel->prox = nullptr;
 
-    // If the queue is not empty, link the current back to the new element
-    if (back) back->prox = new_cel;
-    back = new_cel;  // Move the back pointer to the new element
+    if (back) back->prox = new_cel; // If queue is not empty
+    back = new_cel;
 
-    // If the queue was empty (front is nullptr), set front to point to the new element
-    if (!front) front = back;
+    if (!front) front = back; // If queue was empty
 }
 
 int Queue::Dequeue()
-//
+// Removes and returns the element at the front
 {
     if (!front) 
         throw std::out_of_range("Queue is empty, cannot dequeue.");
@@ -35,14 +35,20 @@ int Queue::Dequeue()
     Cell* aux = front;
     front = front->prox;
 
-    // If the queue becomes empty after the dequeue, reset back to nullptr
-    if (!front)
-        back = nullptr;
+    if (!front) back = nullptr; // Queue became empty
 
     delete aux;
     return removed_key;
 }
 
-void Queue::Clear() { while (front) Dequeue(); }
+void Queue::Clear()
+// Removes all elements
+{ 
+    while (front) Dequeue(); 
+}
 
-bool Queue::IsEmpty() { return !front; }
+bool Queue::IsEmpty()
+// Returns true if queue is empty
+{ 
+    return !front; 
+}

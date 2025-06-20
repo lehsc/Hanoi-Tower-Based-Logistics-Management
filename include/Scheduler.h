@@ -10,7 +10,7 @@
 class Scheduler
 {
     private:
-        int clock_time, heap_size, qtd_events, qtd_packages, next_transport;
+        int clock_time, heap_size, qtd_events, qtd_packages;
         std::string* priority_queue; // min heap
 
         int GetLeftSucessor (int i);
