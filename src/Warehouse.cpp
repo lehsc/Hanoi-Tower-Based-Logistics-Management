@@ -69,7 +69,7 @@ void Warehouse::PushPackage(Package* p)
 }
 
 int* Warehouse::PopPackages(int section, int _clock_time, int _removal_cost, 
-        Package*& packages, int qtd_packages, int& qtd_ids, Transport* t)
+        Package*& packages, int& qtd_ids, Transport* t)
 // Removes packages from the given section, handling transport capacity and state updates
 {
     Stack temp; // Auxiliary stack
@@ -97,32 +97,24 @@ int* Warehouse::PopPackages(int section, int _clock_time, int _removal_cost,
         // Process packages considering transport capacity
         while (temp.GetQtdCells() > 0)
         {           
-            package_id = temp.Pop(); 
-            p = FindPackage(package_id, packages, qtd_packages);
-            
-            if (p)
-            {
-                if (qtd_removed_packages < t->capacity)
-                {
-                    printf("%07d pacote %03d em transito de %03d para %03d\n", _clock_time, package_id, id, section);
-                    p->SetCurrentState(SECTION_REMOVED); // update package status
-                    qtd_removed_packages++;
-                } else {
-                    neighbor->section.Push(package_id); // recolocar o pacote na pilha
-                    printf("%07d pacote %03d rearmazenado em %03d na secao %03d\n", _clock_time, package_id, id, section);
-                    p->SetCurrentState(SECTION_STORED);
-                }
+            package_id = temp.Pop();
+            p = &packages[package_id]; 
 
+            if (qtd_removed_packages < t->capacity)
+            {
+                printf("%07d pacote %03d em transito de %03d para %03d\n", _clock_time, package_id, id, section);
+                p->SetCurrentState(SECTION_REMOVED); // update package status
+                qtd_removed_packages++;
             } else {
-                std::cerr << "Erro: Pacote não encontrado!" << std::endl;
-                exit(EXIT_FAILURE);
-            }      
+                neighbor->section.Push(package_id); // recolocar o pacote na pilha
+                printf("%07d pacote %03d rearmazenado em %03d na secao %03d\n", _clock_time, package_id, id, section);
+                p->SetCurrentState(SECTION_STORED);
+            }     
         }
 
         // Update each package's latest processing time
         for (int i = 0; i < qtd_ids; i++)
             packages[packages_ids[i]].SetPTime(_clock_time);
-        
 
         return packages_ids;
     }

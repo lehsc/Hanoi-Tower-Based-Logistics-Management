@@ -65,9 +65,9 @@ void Graph::StorePackage(Package* p, int warehouse_id)
 }
 
 int* Graph::RemovePackages(int org_warehouse_id, int dst_warehouse_id, int& clock_time, 
-            Package*& packages, int qtd_packages, int& qtd_ids)
+            Package*& packages, int& qtd_ids)
 // Removes packages from a specific warehouse section
 { 
     return warehouses[org_warehouse_id]->PopPackages(dst_warehouse_id, clock_time, 
-        package_removal_cost, packages, qtd_packages, qtd_ids, &t); 
+        package_removal_cost, packages, qtd_ids, &t); 
 }

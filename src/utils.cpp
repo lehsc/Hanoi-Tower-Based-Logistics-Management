@@ -16,14 +16,6 @@
 #include "../include/Package.h"
 #include "../include/Scheduler.h"
 
-//
-Package* FindPackage(int id, Package* packages, int qtd_packages)
-{
-  for (int i = 0; i < qtd_packages; i++)
-    if (id == packages[i].GetId()) return &packages[i];
-  return nullptr;
-}
-
 void PrintPackages(Package* packages, int qtd_packages)
 // Prints all packages' information (id, arrival time, origin, destination)
 {

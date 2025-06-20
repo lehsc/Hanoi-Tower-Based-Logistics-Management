@@ -32,7 +32,7 @@ class Graph
         void PrintWarehouses ();
         void StorePackage(Package* p, int warehouse_id);
         int* RemovePackages(int org_warehouse_id, int dst_warehouse_id, int& clock_time, 
-            Package*& packages, int qtd_packages, int& qtd_ids);
+            Package*& packages, int& qtd_ids);
 
     friend class Package;
 };

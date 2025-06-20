@@ -17,8 +17,7 @@
 Scheduler::Scheduler() { priority_queue = nullptr; }
 
 // Parameterized constructor
-Scheduler::Scheduler(int _qtd_packages) 
-: clock_time(-1), heap_size(_qtd_packages), qtd_events(0), qtd_packages(_qtd_packages) 
+Scheduler::Scheduler(int _qtd_packages) : clock_time(-1), heap_size(_qtd_packages), qtd_events(0)
 {
     priority_queue = new std::string[_qtd_packages];
 }
@@ -170,19 +169,6 @@ void Scheduler::HeapifyDown(int root_index)
     }
 }
 
-Package* Scheduler::SearchPackage(std::string event_key, Package*& packages) 
-//
-{
-    int package_id = stoi(event_key.substr(6,6));
-    for (int i = 0; i < qtd_packages; i++) //
-    {
-        if (package_id == packages[i].GetId())
-            return &packages[i];
-    }
-
-    return nullptr;   
-}
-
 void Scheduler::RunSimulation(Package*& packages, Graph*& system)
 /* Executes the event simulation loop until the queue becomes empty.
    Processes both package and transport events.
@@ -245,7 +231,6 @@ void Scheduler::RunSimulation(Package*& packages, Graph*& system)
                 stoi(current_event_key.substr(9, 3)),  // Destination warehouse ID
                 clock_time, 
                 packages, 
-                qtd_packages, 
                 id_arr_size
             );
             
