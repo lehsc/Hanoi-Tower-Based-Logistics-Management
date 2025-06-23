@@ -133,6 +133,7 @@ void Package::CalcRoute(Graph* g)
     } else {
         std::cerr << "Erro: There is no route between the warehouses " 
                   << origin_id << " and " << destination_id << "." << std::endl;
+        exit(EXIT_FAILURE);
     }
 
     delete[] antecedent;

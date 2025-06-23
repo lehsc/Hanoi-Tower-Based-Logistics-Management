@@ -31,8 +31,6 @@ class Warehouse
         void PrintNeighbors ();  
 
         void PushPackage(Package* p);
-        int* PopPackages(int section, int _clock_time, int _removal_cost, 
-            Package*& packages, int& qtd_ids, Transport* t);
     
     friend class Package;
 };
